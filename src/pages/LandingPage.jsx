@@ -1,6 +1,6 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Box, Container, Typography, Link as MuiLink, Paper } from "@mui/material";
+import { useNavigate } from "react-router-dom";
+import { Box, Container, Typography, Paper } from "@mui/material";
 import { Apartment as BuildingIcon } from "@mui/icons-material";
 import { SearchForm } from "../components/Search/SearchForm";
 
@@ -45,7 +45,7 @@ export default function LandingPage() {
         >
           <BuildingIcon /> StayEasy
         </Typography>
-        <MuiLink
+        {/* <MuiLink
           component={Link}
           to="/results"
           underline="hover"
@@ -53,7 +53,7 @@ export default function LandingPage() {
           sx={{ fontSize: "0.9rem" }}
         >
           Skip to Results
-        </MuiLink>
+        </MuiLink> */}
       </Container>
 
       {/* HERO TEXT */}

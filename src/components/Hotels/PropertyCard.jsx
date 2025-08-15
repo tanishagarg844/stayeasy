@@ -1,26 +1,54 @@
 import React, { useState, useMemo } from "react";
-import { Card } from "../common/Card";
-import { Button } from "../common/Button";
 import { 
-  Hotel, 
+  Card, 
+  CardMedia, 
+  CardContent, 
+  Typography, 
+  Box, 
+  Chip, 
+  Button, 
+  IconButton, 
+  Stack, 
+  Divider, 
+  Rating,
+  Paper,
+  Grid,
+  List,
+  ListItem,
+  ListItemText,
+  Dialog,
+  DialogContent,
+  DialogActions
+} from "@mui/material";
+import { 
   Star, 
-  MapPin, 
+  LocationOn, 
   Wifi, 
-  Waves, 
-  UtensilsCrossed, 
-  Car, 
-  Zap, 
+  Pool, 
+  Restaurant, 
+  LocalParking, 
+  FitnessCenter, 
   Bed, 
-  Clock, 
+  AccessTime, 
   CheckCircle, 
-  ChevronDown, 
-  ChevronUp,
+  ExpandMore, 
+  ExpandLess,
   Phone,
-  Mail
-} from "lucide-react";
+  Email,
+  NavigateBefore,
+  NavigateNext,
+  Favorite,
+  FavoriteBorder,
+  AttachMoney,
+  People,
+  Business as BusinessIcon
+} from "@mui/icons-material";
 
-export function PropertyCard({ item, onOpen }) {
+export function PropertyCard({ item, onOpen, viewMode = 'grid' }) {
   const [showMoreRooms, setShowMoreRooms] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
   
   const hotelName = item?.hotelName || item?.name || "Hotel";
   const hotelCode = item?.hotelCode || "";
@@ -33,13 +61,11 @@ export function PropertyCard({ item, onOpen }) {
   const segments = item?.segments || [];
   const hotelAccommodation = item?.hotelAccommodation || "";
   
-  const mainImage = useMemo(() => {
+  const hotelImages = useMemo(() => {
     if (item?.hotelImageLinks?.length > 0) {
-      const generalView = item.hotelImageLinks.find(img => img.imageType === "General view");
-      const roomImage = item.hotelImageLinks.find(img => img.imageType === "Room");
-      return generalView?.imageLink || roomImage?.imageLink || item.hotelImageLinks[0]?.imageLink;
+      return item.hotelImageLinks.map(img => img.imageLink).filter(Boolean);
     }
-    return null;
+    return [];
   }, [item?.hotelImageLinks]);
 
   const roomOptions = useMemo(() => {
@@ -106,23 +132,21 @@ export function PropertyCard({ item, onOpen }) {
     }).format(price);
   };
 
-  const formatRating = (rating) => {
+  const getRatingValue = (rating) => {
     const starCount = parseInt(rating.match(/\d+/)?.[0] || "0");
-    return Array.from({ length: Math.min(5, starCount) }).map((_, i) => (
-      <Star key={i} size={16} className="text-yellow-500 fill-current" />
-    ));
+    return Math.min(5, starCount);
   };
 
   const getFacilityIcon = (amenity) => {
     const amenityName = (amenity?.name || amenity || "").toLowerCase();
-    if (amenityName.includes('wifi') || amenityName.includes('internet')) return <Wifi size={14} />;
-    if (amenityName.includes('pool') || amenityName.includes('swimming')) return <Waves size={14} />;
-    if (amenityName.includes('restaurant') || amenityName.includes('dining')) return <UtensilsCrossed size={14} />;
-    if (amenityName.includes('parking') || amenityName.includes('car')) return <Car size={14} />;
-    if (amenityName.includes('gym') || amenityName.includes('fitness')) return <Zap size={14} />;
-    if (amenityName.includes('room service')) return <Bed size={14} />;
-    if (amenityName.includes('24-hour')) return <Clock size={14} />;
-    return null;
+    if (amenityName.includes('wifi') || amenityName.includes('internet')) return <Wifi />;
+    if (amenityName.includes('pool') || amenityName.includes('swimming')) return <Pool />;
+    if (amenityName.includes('restaurant') || amenityName.includes('dining')) return <Restaurant />;
+    if (amenityName.includes('parking') || amenityName.includes('car')) return <LocalParking />;
+    if (amenityName.includes('gym') || amenityName.includes('fitness')) return <FitnessCenter />;
+    if (amenityName.includes('room service')) return <Bed />;
+    if (amenityName.includes('24-hour')) return <AccessTime />;
+    return <CheckCircle />;
   };
 
   const formatBoardName = (boardName) => {
@@ -136,176 +160,439 @@ export function PropertyCard({ item, onOpen }) {
     return boardMap[boardName] || boardName;
   };
 
+  const nextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % hotelImages.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + hotelImages.length) % hotelImages.length);
+  };
+
+  const goToImage = (index) => {
+    setCurrentImageIndex(index);
+  };
+
+  const isListView = viewMode === 'list';
+
   return (
-    <Card className="overflow-hidden p-0 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col bg-white">
-      {mainImage ? (
-        <div className="relative">
-          <img src={mainImage} alt={hotelName} className="w-full h-64 object-cover" />
-          
-          <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-semibold text-gray-800 shadow-sm flex items-center gap-1">
-            {formatRating(rating)}
-            <span className="text-gray-600">{rating}</span>
-          </div>
-
-          {hotelAccommodation && (
-            <div className="absolute top-3 right-3 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-sm">
-              {hotelAccommodation}
-            </div>
-          )}
-
-          {segments.length > 0 && (
-            <div className="absolute bottom-3 left-3 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-semibold shadow-sm">
-              {segments[0]}
-            </div>
-          )}
-
-          {lowestPrice > 0 && (
-            <div className="absolute bottom-3 right-3 bg-orange-500 text-white px-3 py-1 rounded-full text-sm font-bold shadow-sm">
-              From {formatPrice(lowestPrice)}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="w-full h-64 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-400">
-          <Hotel size={48} />
-        </div>
-      )}
-
-      <div className="p-6 space-y-4 flex-1 flex flex-col">
-        <div className="space-y-3">
-          <div className="flex items-start justify-between">
-            <h3 className="font-bold text-xl text-gray-800 leading-tight flex-1 pr-3">
-              {hotelName}
-            </h3>
-            {hotelCode && (
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                #{hotelCode}
-              </span>
-            )}
-          </div>
-          
-          <div className="flex items-start gap-2 text-sm text-gray-600">
-            <MapPin size={16} className="flex-shrink-0 mt-0.5 text-blue-500" />
-            <div>
-              <span className="line-clamp-2 leading-tight">{address}</span>
-              {postalCode && <span className="block text-xs text-gray-500">{postalCode}</span>}
-            </div>
-          </div>
-
-          {description && (
-            <p className="text-sm text-gray-600 line-clamp-3 leading-relaxed">
-              {description}
-            </p>
-          )}
-        </div>
-
-        {roomOptions.length > 0 && (
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide flex items-center gap-2">
-              <Bed size={16} className="text-blue-500" />
-              Room Options
-            </h4>
-            
-            <div className="space-y-2">
-              {roomOptions.slice(0, showMoreRooms ? roomOptions.length : 2).map((room, roomIdx) => (
-                <div key={roomIdx} className="bg-gray-50 rounded-lg p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h5 className="font-medium text-gray-800 text-sm">{room.roomName}</h5>
-                    <span className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded">
-                      {room.rooms} room • {room.adults} adults • {room.children} children
-                    </span>
-                  </div>
+    <>
+      <Card 
+        elevation={2} 
+        sx={{ 
+          height: '100%',
+          display: 'flex',
+          flexDirection: isListView ? 'row' : 'column',
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            elevation: 8,
+            transform: 'translateY(-4px)'
+          }
+        }}
+      >
+        {/* Image Section */}
+        <Box sx={{ position: 'relative', flex: isListView ? '0 0 300px' : 'none' }}>
+          {hotelImages.length > 0 ? (
+            <>
+              <CardMedia
+                component="img"
+                height={isListView ? "100%" : "250"}
+                image={hotelImages[currentImageIndex]}
+                alt={`${hotelName} - ${currentImageIndex + 1}`}
+                sx={{ 
+                  cursor: 'pointer',
+                  objectFit: 'cover'
+                }}
+                onClick={() => setImageDialogOpen(true)}
+              />
+              
+              {/* Carousel Navigation */}
+              {hotelImages.length > 1 && (
+                <>
+                  <IconButton
+                    onClick={prevImage}
+                    sx={{
+                      position: 'absolute',
+                      left: 8,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      bgcolor: 'rgba(255,255,255,0.9)',
+                      '&:hover': { bgcolor: 'white' }
+                    }}
+                  >
+                    <NavigateBefore />
+                  </IconButton>
                   
-                  <div className="space-y-1">
-                    {room.boardOptions.slice(0, 2).map((board, boardIdx) => (
-                      <div key={boardIdx} className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">{formatBoardName(board.boardName)}</span>
-                        <span className="font-semibold text-blue-600">{formatPrice(board.price)}</span>
-                      </div>
+                  <IconButton
+                    onClick={nextImage}
+                    sx={{
+                      position: 'absolute',
+                      right: 8,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      bgcolor: 'rgba(255,255,255,0.9)',
+                      '&:hover': { bgcolor: 'white' }
+                    }}
+                  >
+                    <NavigateNext />
+                  </IconButton>
+
+                  {/* Image Indicators */}
+                  <Box sx={{ 
+                    position: 'absolute', 
+                    bottom: 16, 
+                    left: '50%', 
+                    transform: 'translateX(-50%)',
+                    display: 'flex',
+                    gap: 1
+                  }}>
+                    {hotelImages.map((_, index) => (
+                      <Box
+                        key={index}
+                        onClick={() => goToImage(index)}
+                        sx={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          bgcolor: index === currentImageIndex ? 'white' : 'rgba(255,255,255,0.5)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          '&:hover': { bgcolor: 'rgba(255,255,255,0.8)' }
+                        }}
+                      />
                     ))}
-                    {room.boardOptions.length > 2 && (
-                      <span className="text-xs text-gray-500">+{room.boardOptions.length - 2} more options</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+                  </Box>
 
-            {roomOptions.length > 2 && (
-              <button
-                onClick={() => setShowMoreRooms(!showMoreRooms)}
-                className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
-              >
-                {showMoreRooms ? (
-                  <>
-                    <ChevronUp size={16} />
-                    Show Less
-                  </>
-                ) : (
-                  <>
-                    <ChevronDown size={16} />
-                    Show {roomOptions.length - 2} More Rooms
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-        )}
-
-        {topFacilities.length > 0 && (
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Key Features</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {topFacilities.map((facility, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs text-gray-600">
-                  {getFacilityIcon(facility) || <CheckCircle size={12} className="text-green-500" />}
-                  <span className="line-clamp-1">{facility?.name || facility}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {interestPoints.length > 0 && (
-          <div className="space-y-2">
-            <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Nearby Places</h4>
-            <div className="space-y-1">
-              {interestPoints.slice(0, 3).map((point, i) => (
-                <div key={i} className="flex items-center justify-between text-xs text-gray-600">
-                  <span className="line-clamp-1">{point.pointName}</span>
-                  <span className="text-blue-600 font-medium">{point.distance}m</span>
-                </div>
-              ))}
-              {interestPoints.length > 3 && (
-                <span className="text-xs text-gray-500">+{interestPoints.length - 3} more places</span>
+                  {/* Image Counter */}
+                  <Chip
+                    label={`${currentImageIndex + 1} / ${hotelImages.length}`}
+                    size="small"
+                    sx={{
+                      position: 'absolute',
+                      top: 16,
+                      right: 16,
+                      bgcolor: 'rgba(0,0,0,0.7)',
+                      color: 'white'
+                    }}
+                  />
+                </>
               )}
-            </div>
-          </div>
-        )}
-
-        <div className="space-y-2 pt-2 border-t border-gray-100">
-          <div className="flex items-center gap-2 text-xs text-gray-600">
-            <Phone size={12} className="text-green-500" />
-            <span>{phoneNumbers[0]?.phoneNumber || "Phone not available"}</span>
-          </div>
-          
-          {email && (
-            <div className="flex items-center gap-2 text-xs text-gray-600">
-              <Mail size={12} className="text-blue-500" />
-              <span className="line-clamp-1">{email}</span>
-            </div>
+            </>
+          ) : (
+            <Box sx={{ 
+              height: isListView ? "100%" : "250", 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center',
+              bgcolor: 'grey.200'
+            }}>
+              <BusinessIcon sx={{ fontSize: 60, color: 'grey.400' }} />
+            </Box>
           )}
-        </div>
-        
-        <div className="pt-3">
-          <Button 
-            onClick={onOpen}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-semibold transition-all duration-200 hover:shadow-lg"
+
+          {/* Top Badges */}
+          <Stack spacing={1} sx={{ position: 'absolute', top: 16, left: 16 }}>
+            <Chip
+              icon={<Star />}
+              label={rating}
+              size="small"
+              sx={{ bgcolor: 'rgba(255,255,255,0.95)' }}
+            />
+            
+            {hotelAccommodation && (
+              <Chip
+                label={hotelAccommodation}
+                size="small"
+                color="primary"
+                sx={{ bgcolor: 'primary.main', color: 'white' }}
+              />
+            )}
+
+            {segments.length > 0 && (
+              <Chip
+                label={segments[0]}
+                size="small"
+                color="success"
+                sx={{ bgcolor: 'success.main', color: 'white' }}
+              />
+            )}
+          </Stack>
+
+          {/* Favorite Button */}
+          <IconButton
+            onClick={() => setIsFavorite(!isFavorite)}
+            sx={{
+              position: 'absolute',
+              top: 16,
+              right: 16,
+              bgcolor: 'rgba(255,255,255,0.9)',
+              '&:hover': { bgcolor: 'white' }
+            }}
           >
-            View Details & Book
-          </Button>
-        </div>
-      </div>
-    </Card>
+            {isFavorite ? <Favorite color="error" /> : <FavoriteBorder />}
+          </IconButton>
+
+          {/* Price Badge */}
+          {lowestPrice > 0 && (
+            <Chip
+              icon={<AttachMoney />}
+              label={`From ${formatPrice(lowestPrice)}`}
+              color="warning"
+              sx={{
+                position: 'absolute',
+                bottom: 16,
+                right: 16,
+                bgcolor: 'warning.main',
+                color: 'white',
+                fontWeight: 'bold'
+              }}
+            />
+          )}
+        </Box>
+
+        {/* Content Section */}
+        <CardContent sx={{ flex: 1, p: 3 }}>
+          <Stack spacing={2}>
+            {/* Header */}
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="h6" fontWeight="bold" sx={{ flex: 1, pr: 2 }}>
+                  {hotelName}
+                </Typography>
+                {hotelCode && (
+                  <Chip label={`#${hotelCode}`} size="small" variant="outlined" />
+                )}
+              </Box>
+              
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Rating value={getRatingValue(rating)} readOnly size="small" />
+                <Typography variant="body2" color="text.secondary">
+                  {rating}
+                </Typography>
+              </Box>
+              
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                <LocationOn color="primary" sx={{ mt: 0.5, fontSize: 20 }} />
+                <Box>
+                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.4 }}>
+                    {address}
+                  </Typography>
+                  {postalCode && (
+                    <Typography variant="caption" color="text.secondary">
+                      {postalCode}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            </Box>
+
+            {/* Description */}
+            {description && (
+              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                {description}
+              </Typography>
+            )}
+
+            {/* Room Options */}
+            {roomOptions.length > 0 && (
+              <Box>
+                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Bed color="primary" />
+                  Room Options
+                </Typography>
+                
+                <Stack spacing={1}>
+                  {roomOptions.slice(0, showMoreRooms ? roomOptions.length : 2).map((room, roomIdx) => (
+                    <Paper key={roomIdx} variant="outlined" sx={{ p: 2, bgcolor: 'grey.50' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                        <Typography variant="body2" fontWeight="medium">
+                          {room.roomName}
+                        </Typography>
+                        <Chip
+                          icon={<People />}
+                          label={`${room.rooms} room • ${room.adults} adults • ${room.children} children`}
+                          size="small"
+                          variant="outlined"
+                          color="primary"
+                        />
+                      </Box>
+                      
+                      <Stack spacing={0.5}>
+                        {room.boardOptions.slice(0, 2).map((board, boardIdx) => (
+                          <Box key={boardIdx} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="body2" color="text.secondary">
+                              {formatBoardName(board.boardName)}
+                            </Typography>
+                            <Typography variant="body2" fontWeight="bold" color="primary">
+                              {formatPrice(board.price)}
+                            </Typography>
+                          </Box>
+                        ))}
+                        {room.boardOptions.length > 2 && (
+                          <Typography variant="caption" color="text.secondary">
+                            +{room.boardOptions.length - 2} more options
+                          </Typography>
+                        )}
+                      </Stack>
+                    </Paper>
+                  ))}
+                </Stack>
+
+                {roomOptions.length > 2 && (
+                  <Button
+                    startIcon={showMoreRooms ? <ExpandLess /> : <ExpandMore />}
+                    onClick={() => setShowMoreRooms(!showMoreRooms)}
+                    size="small"
+                    sx={{ mt: 1 }}
+                  >
+                    {showMoreRooms ? 'Show Less' : `Show ${roomOptions.length - 2} More Rooms`}
+                  </Button>
+                )}
+              </Box>
+            )}
+
+            {/* Facilities */}
+            {topFacilities.length > 0 && (
+              <Box>
+                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
+                  Key Features
+                </Typography>
+                <Grid container spacing={1}>
+                  {topFacilities.map((facility, i) => (
+                    <Grid item xs={6} key={i}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box sx={{ color: 'primary.main' }}>
+                          {getFacilityIcon(facility)}
+                        </Box>
+                        <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.2 }}>
+                          {facility?.name || facility}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            )}
+
+            {/* Nearby Places */}
+            {interestPoints.length > 0 && (
+              <Box>
+                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
+                  Nearby Places
+                </Typography>
+                <List dense sx={{ py: 0 }}>
+                  {interestPoints.slice(0, 3).map((point, i) => (
+                    <ListItem key={i} sx={{ px: 0, py: 0.5 }}>
+                      <ListItemText
+                        primary={point.pointName}
+                        secondary={`${point.distance}m`}
+                        primaryTypographyProps={{ variant: 'body2' }}
+                        secondaryTypographyProps={{ variant: 'caption', color: 'primary' }}
+                      />
+                    </ListItem>
+                  ))}
+                  {interestPoints.length > 3 && (
+                    <ListItem sx={{ px: 0, py: 0.5 }}>
+                      <ListItemText
+                        secondary={`+${interestPoints.length - 3} more places`}
+                        secondaryTypographyProps={{ variant: 'caption', color: 'text.secondary' }}
+                      />
+                    </ListItem>
+                  )}
+                </List>
+              </Box>
+            )}
+
+            {/* Contact Info */}
+            <Divider />
+            <Stack spacing={1}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Phone color="success" sx={{ fontSize: 16 }} />
+                <Typography variant="caption" color="text.secondary">
+                  {phoneNumbers[0]?.phoneNumber || "Phone not available"}
+                </Typography>
+              </Box>
+              
+              {email && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Email color="primary" sx={{ fontSize: 16 }} />
+                  <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-all' }}>
+                    {email}
+                  </Typography>
+                </Box>
+              )}
+            </Stack>
+
+            {/* Action Button */}
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={onOpen}
+              sx={{ 
+                mt: 2,
+                bgcolor: 'primary.main',
+                '&:hover': { bgcolor: 'primary.dark' }
+              }}
+            >
+              View Details & Book
+            </Button>
+          </Stack>
+        </CardContent>
+      </Card>
+
+      {/* Image Dialog */}
+      <Dialog
+        open={imageDialogOpen}
+        onClose={() => setImageDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogContent sx={{ p: 0, position: 'relative' }}>
+          {hotelImages.length > 0 && (
+            <>
+              <img
+                src={hotelImages[currentImageIndex]}
+                alt={`${hotelName} - ${currentImageIndex + 1}`}
+                style={{ width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'contain' }}
+              />
+              
+              {hotelImages.length > 1 && (
+                <>
+                  <IconButton
+                    onClick={prevImage}
+                    sx={{
+                      position: 'absolute',
+                      left: 16,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      bgcolor: 'rgba(255,255,255,0.9)',
+                      '&:hover': { bgcolor: 'white' }
+                    }}
+                  >
+                    <NavigateBefore />
+                  </IconButton>
+                  
+                  <IconButton
+                    onClick={nextImage}
+                    sx={{
+                      position: 'absolute',
+                      right: 16,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      bgcolor: 'rgba(255,255,255,0.9)',
+                      '&:hover': { bgcolor: 'white' }
+                    }}
+                  >
+                    <NavigateNext />
+                  </IconButton>
+                </>
+              )}
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setImageDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }

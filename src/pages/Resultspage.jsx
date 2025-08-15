@@ -7,19 +7,37 @@ import { DetailsDrawer } from "../components/Hotels/DetailsDrawer";
 import { Filters } from "../components/Filters/Filters";
 import { SearchForm } from "../components/Search/SearchForm";
 import { 
-  Building, 
+  Box, 
+  Container, 
+  Typography, 
+  AppBar, 
+  Toolbar, 
+  IconButton, 
+  Button, 
+  Chip, 
+  Grid, 
+  Paper,  
+  Fab, 
+  CircularProgress, 
+  Alert, 
+  AlertTitle,
+  Stack,
+  Avatar,
+  Badge
+} from "@mui/material";
+import { 
+  Business, 
   Bed, 
-  Calendar, 
-  MapPin, 
+  Event, 
   Star, 
-  TrendingUp, 
-  TrendingDown,
   Filter,
-  X,
+  Close,
   Search,
-  AlertCircle,
-  Loader2
-} from "lucide-react";
+  ArrowBack,
+  Sort,
+  ViewList,
+  GridView
+} from "@mui/icons-material";
 
 export default function ResultsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -30,8 +48,9 @@ export default function ResultsPage() {
   const { filters, sort, nameQuery } = useSelector((state) => state.hotels);
   
   const [openIdx, setOpenIdx] = useState(null);
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
   const [showSearchForm, setShowSearchForm] = useState(false);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
   const destination = searchParams.get("destination") || "";
   const destinationId = searchParams.get("destinationId") || "";
@@ -162,182 +181,306 @@ export default function ResultsPage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Loader2 size={48} className="animate-spin text-blue-600 mx-auto" />
-          <h2 className="text-2xl font-semibold text-gray-800">Searching for Hotels...</h2>
-          <p className="text-gray-600">Finding the best options for your stay</p>
-        </div>
-      </div>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 50%, #0d47a1 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: 3
+        }}
+      >
+        <CircularProgress size={80} sx={{ color: 'white' }} />
+        <Typography variant="h4" color="white" fontWeight="bold">
+          Searching for Hotels...
+        </Typography>
+        <Typography variant="h6" color="white" sx={{ opacity: 0.8 }}>
+          Finding the best options for your stay
+        </Typography>
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center space-y-4 max-w-md">
-          <AlertCircle size={48} className="text-red-500 mx-auto" />
-          <h2 className="text-2xl font-semibold text-gray-800">Search Error</h2>
-          <p className="text-gray-600">{error}</p>
-          <button
-            onClick={() => navigate("/")}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 50%, #0d47a1 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: 3
+        }}
+      >
+        <Alert 
+          severity="error" 
+          sx={{ 
+            maxWidth: 500, 
+            bgcolor: 'white',
+            '& .MuiAlert-icon': { fontSize: 40 }
+          }}
+        >
+          <AlertTitle>Search Error</AlertTitle>
+          {error}
+          <Box sx={{ mt: 2 }}>
+            <Button 
+              variant="contained" 
+              onClick={() => navigate("/")}
+              sx={{ bgcolor: '#1976d2' }}
+            >
+              Try Again
+            </Button>
+          </Box>
+        </Alert>
+      </Box>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate("/")}
-                className="text-blue-600 hover:text-blue-700 font-semibold"
-              >
-                ← Back to Search
-              </button>
-              
-              <div className="hidden md:flex items-center gap-2 text-sm text-gray-600">
-                <Building size={16} />
-                <span>{destination}</span>
-                <span>•</span>
-                <Calendar size={16} />
-                <span>{from} - {to}</span>
-                <span>•</span>
-                <Bed size={16} />
-                <span>{occ.reduce((sum, o) => sum + o.adults + o.children, 0)} guests</span>
-              </div>
-            </div>
+    <Box sx={{ minHeight: '100vh', bgcolor: '#f5f5f5' }}>
+      {/* App Bar */}
+      <AppBar 
+        position="sticky" 
+        elevation={0}
+        sx={{ 
+          bgcolor: 'white',
+          borderBottom: '1px solid',
+          borderColor: 'divider'
+        }}
+      >
+        <Toolbar>
+          <IconButton
+            edge="start"
+            color="primary"
+            onClick={() => navigate("/")}
+            sx={{ mr: 2 }}
+          >
+            <ArrowBack />
+          </IconButton>
+          
+          <Box sx={{ flexGrow: 1, display: { xs: 'none', md: 'flex' }, gap: 2 }}>
+            <Chip 
+              icon={<Business />} 
+              label={destination} 
+              variant="outlined" 
+              color="primary"
+            />
+            <Chip 
+              icon={<Event />} 
+              label={`${from} - ${to}`} 
+              variant="outlined" 
+              color="primary"
+            />
+            <Chip 
+              icon={<Bed />} 
+              label={`${occ.reduce((sum, o) => sum + o.adults + o.children, 0)} guests`} 
+              variant="outlined" 
+              color="primary"
+            />
+          </Box>
 
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowSearchForm(!showSearchForm)}
-                className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <Search size={20} className="text-gray-600" />
-              </button>
-              
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-              >
-                <Filter size={16} />
-                Filters
-                {Object.values(filters).some(v => v !== null && v !== 0 && v !== 100000 && (!Array.isArray(v) || v.length > 0)) && (
-                  <span className="bg-white text-blue-600 text-xs px-2 py-1 rounded-full font-bold">
-                    {Object.values(filters).filter(v => v !== null && v !== 0 && v !== 100000 && (!Array.isArray(v) || v.length > 0)).length}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
+          <Stack direction="row" spacing={1}>
+            <IconButton
+              color="primary"
+              onClick={() => setShowSearchForm(!showSearchForm)}
+              sx={{ display: { xs: 'flex', md: 'none' } }}
+            >
+              <Search />
+            </IconButton>
+            
+            <Button
+              variant="contained"
+              startIcon={<Filter />}
+              onClick={() => setShowFilters(!showFilters)}
+              sx={{ 
+                bgcolor: '#1976d2',
+                '&:hover': { bgcolor: '#1565c0' }
+              }}
+            >
+              Filters
+              {Object.values(filters).some(v => v !== null && v !== 0 && v !== 100000 && (!Array.isArray(v) || v.length > 0)) && (
+                <Badge 
+                  badgeContent={Object.values(filters).filter(v => v !== null && v !== 0 && v !== 100000 && (!Array.isArray(v) || v.length > 0)).length} 
+                  color="error"
+                  sx={{ ml: 1 }}
+                />
+              )}
+            </Button>
+          </Stack>
+        </Toolbar>
 
-          {showSearchForm && (
-            <div className="pb-4 border-t border-gray-200">
+        {showSearchForm && (
+          <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+            <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
               <SearchForm onSubmit={onSearchSubmit} />
-            </div>
-          )}
-        </div>
-      </div>
+            </Paper>
+          </Box>
+        )}
+      </AppBar>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="flex flex-col lg:flex-row gap-6">
+      {/* Main Content */}
+      <Container maxWidth="xl" sx={{ py: 3 }}>
+        <Grid container spacing={3}>
+          {/* Filters Sidebar */}
           {showFilters && (
-            <div className="lg:w-80">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-24">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-semibold text-gray-800">Filters</h3>
-                  <button
+            <Grid item xs={12} lg={3}>
+              <Paper 
+                elevation={2} 
+                sx={{ 
+                  p: 3, 
+                  borderRadius: 2,
+                  position: 'sticky',
+                  top: 100,
+                  maxHeight: 'calc(100vh - 120px)',
+                  overflow: 'auto'
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+                  <Typography variant="h6" fontWeight="bold">
+                    Filters
+                  </Typography>
+                  <IconButton
                     onClick={() => setShowFilters(false)}
-                    className="lg:hidden p-1 hover:bg-gray-100 rounded transition-colors"
+                    sx={{ display: { xs: 'flex', lg: 'none' } }}
                   >
-                    <X size={20} className="text-gray-500" />
-                  </button>
-                </div>
+                    <Close />
+                  </IconButton>
+                </Box>
                 <Filters />
-              </div>
-            </div>
+              </Paper>
+            </Grid>
           )}
 
-          <div className="flex-1">
+          {/* Hotels List */}
+          <Grid item xs={12} lg={showFilters ? 9 : 12}>
             {resultsStats && (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                  <div className="flex items-center gap-6">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-gray-800">{resultsStats.total}</div>
-                      <div className="text-sm text-gray-600">Properties</div>
-                    </div>
-                    
-                    {resultsStats.priceRange.min > 0 && (
-                      <div className="text-center">
-                        <div className="text-lg font-semibold text-gray-800">
-                          ₹{resultsStats.priceRange.min.toLocaleString()} - ₹{resultsStats.priceRange.max.toLocaleString()}
-                        </div>
-                        <div className="text-sm text-gray-600">Price Range</div>
-                      </div>
-                    )}
-                    
-                    <div className="text-center">
-                      <div className="flex items-center gap-1 justify-center">
-                        {Array.from({ length: resultsStats.avgRating }).map((_, i) => (
-                          <Star key={i} size={16} className="text-yellow-500 fill-current" />
-                        ))}
-                      </div>
-                      <div className="text-sm text-gray-600">Avg Rating</div>
-                    </div>
-                  </div>
+              <Paper elevation={2} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+                <Grid container alignItems="center" justifyContent="space-between">
+                  <Grid item>
+                    <Stack direction="row" spacing={4} alignItems="center">
+                      <Box textAlign="center">
+                        <Typography variant="h3" fontWeight="bold" color="primary">
+                          {resultsStats.total}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Properties
+                        </Typography>
+                      </Box>
+                      
+                      {resultsStats.priceRange.min > 0 && (
+                        <Box textAlign="center">
+                          <Typography variant="h6" fontWeight="bold">
+                            ₹{resultsStats.priceRange.min.toLocaleString()} - ₹{resultsStats.priceRange.max.toLocaleString()}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Price Range
+                          </Typography>
+                        </Box>
+                      )}
+                      
+                      <Box textAlign="center">
+                        <Stack direction="row" spacing={0.5} justifyContent="center" sx={{ mb: 0.5 }}>
+                          {Array.from({ length: resultsStats.avgRating }).map((_, i) => (
+                            <Star key={i} sx={{ color: '#ffc107', fontSize: 20 }} />
+                          ))}
+                        </Stack>
+                        <Typography variant="body2" color="text.secondary">
+                          Avg Rating
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </Grid>
 
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">Sort by:</span>
-                    <select
-                      value={sort || ""}
-                      onChange={(e) => dispatch({ type: "hotels/setSort", payload: e.target.value || null })}
-                      className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Recommended</option>
-                      <option value="asc">Price: Low to High</option>
-                      <option value="desc">Price: High to Low</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
+                  <Grid item>
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <Typography variant="body2" color="text.secondary">
+                        Sort by:
+                      </Typography>
+                      <Button
+                        variant="outlined"
+                        startIcon={<Sort />}
+                        select
+                        value={sort || ""}
+                        onChange={(e) => dispatch({ type: "hotels/setSort", payload: e.target.value || null })}
+                        sx={{ minWidth: 200 }}
+                      >
+                        {sort === "asc" ? "Price: Low to High" : 
+                         sort === "desc" ? "Price: High to Low" : "Recommended"}
+                      </Button>
+                      
+                      <Stack direction="row" spacing={1}>
+                        <IconButton
+                          color={viewMode === 'grid' ? 'primary' : 'default'}
+                          onClick={() => setViewMode('grid')}
+                        >
+                          <GridView />
+                        </IconButton>
+                        <IconButton
+                          color={viewMode === 'list' ? 'primary' : 'default'}
+                          onClick={() => setViewMode('list')}
+                        >
+                          <ViewList />
+                        </IconButton>
+                      </Stack>
+                    </Stack>
+                  </Grid>
+                </Grid>
+              </Paper>
             )}
 
             {filtered.length === 0 ? (
-              <div className="text-center py-16">
-                <Building size={64} className="text-gray-300 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-800 mb-2">No Properties Found</h3>
-                <p className="text-gray-600 mb-6">
+              <Paper elevation={2} sx={{ p: 8, textAlign: 'center', borderRadius: 2 }}>
+                <Avatar sx={{ width: 80, height: 80, bgcolor: 'grey.300', mx: 'auto', mb: 3 }}>
+                  <Business sx={{ fontSize: 40, color: 'grey.600' }} />
+                </Avatar>
+                <Typography variant="h5" fontWeight="bold" gutterBottom>
+                  No Properties Found
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 400, mx: 'auto' }}>
                   Try adjusting your search criteria or filters to find more options.
-                </p>
-                <button
+                </Typography>
+                <Button
+                  variant="contained"
                   onClick={() => setShowFilters(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-colors"
+                  sx={{ bgcolor: '#1976d2' }}
                 >
                   Adjust Filters
-                </button>
-              </div>
+                </Button>
+              </Paper>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              <Grid container spacing={3}>
                 {filtered.map((hotel, idx) => (
-                  <PropertyCard
-                    key={hotel.id || idx}
-                    item={hotel}
-                    onOpen={() => setOpenIdx(idx)}
-                  />
+                  <Grid item xs={12} md={viewMode === 'grid' ? 6 : 12} key={hotel.id || idx}>
+                    <PropertyCard
+                      item={hotel}
+                      onOpen={() => setOpenIdx(idx)}
+                      viewMode={viewMode}
+                    />
+                  </Grid>
                 ))}
-              </div>
+              </Grid>
             )}
-          </div>
-        </div>
-      </div>
+          </Grid>
+        </Grid>
+      </Container>
+
+      {/* Floating Action Button for Mobile */}
+      <Fab
+        color="primary"
+        aria-label="filters"
+        onClick={() => setShowFilters(!showFilters)}
+        sx={{ 
+          position: 'fixed', 
+          bottom: 16, 
+          right: 16,
+          display: { xs: 'flex', lg: 'none' }
+        }}
+      >
+        <Filter />
+      </Fab>
 
       {openIdx !== null && (
         <DetailsDrawer
@@ -346,6 +489,6 @@ export default function ResultsPage() {
           data={filtered[openIdx]}
         />
       )}
-    </div>
+    </Box>
   );
 }

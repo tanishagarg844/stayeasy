@@ -27,16 +27,19 @@ export function DetailsDrawer({ open, onClose, data }) {
   const hotelName = data?.hotelName || data?.name || "Hotel";
   const hotelCode = data?.hotelCode || "";
   const rating = data?.rating || "0 STARS";
+  
   const description = data?.description || "";
   const address = data?.address || "";
   const postalCode = data?.postalCode || "";
   const email = data?.email || "";
   const phoneNumbers = data?.phoneResponses || [];
   const website = data?.website || "";
-  const roomResponses = data?.roomResponses || [];
-  const facilityResponses = data?.facilityResponses || [];
+  
+  const roomResponses = useMemo(() => data?.roomResponses || [], [data?.roomResponses]);
+  const facilityResponses = useMemo(() => data?.facilityResponses || [], [data?.facilityResponses]);
+  const hotelImageLinks = useMemo(() => data?.hotelImageLinks || [], [data?.hotelImageLinks]);
+  
   const interestPoints = data?.interestPoints || [];
-  const hotelImageLinks = data?.hotelImageLinks || [];
 
   const roomTypes = useMemo(() => {
     if (!roomResponses.length) return [];
